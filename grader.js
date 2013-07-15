@@ -50,7 +50,6 @@ var checkFileAtUrl = function(url, checksfile) {
     var resp = getResp(url, checksfile);        
     $ = cheerio.load(resp);
     return checkContents($, checksfile);
-    //return checkContents($, checksfile);
 }
 
 var getResp = function(url){
