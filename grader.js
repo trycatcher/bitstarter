@@ -22,9 +22,11 @@ References:
 */
 
 var fs = require('fs');
+var rest = require('restler');
 var program = require('commander');
 var cheerio = require('cheerio');
 var HTMLFILE_DEFAULT = "index.html";
+//var URL_DEFAULT = "www.selfstarter.us";
 var CHECKSFILE_DEFAULT = "checks.json";
 
 var assertFileExists = function(infile) {
@@ -44,8 +46,26 @@ var loadChecks = function(checksfile) {
     return JSON.parse(fs.readFileSync(checksfile));
 };
 
+var checkFileAtUrl = function(url, checksfile) {
+    var resp = getResp(url, checksfile);        
+    $ = cheerio.load(resp);
+    return checkContents($, checksfile);
+    //return checkContents($, checksfile);
+}
+
+var getResp = function(url){
+    var result = rest.get(url).on('complete', function(response){
+	return response;
+    });
+    return result;
+};
+
 var checkHtmlFile = function(htmlfile, checksfile) {
-    $ = cheerioHtmlFile(htmlfile);
+    $ = cheerioHtmlFile(htmlfile, checksfile);
+    return checkContents($, checksfile);
+}
+
+var checkContents = function(contents, checksfile) {
     var checks = loadChecks(checksfile).sort();
     var out = {};
     for(var ii in checks) {
@@ -64,11 +84,16 @@ var clone = function(fn) {
 if(require.main == module) {
     program
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
-        .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+        .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists))
+        .option('-u, --url <url', 'URL')
         .parse(process.argv);
-    var checkJson = checkHtmlFile(program.file, program.checks);
+    var checkJson;
+    console.log(program.file + " " + program.url);
+    if (program.file) checkJson = checkHtmlFile(program.file, program.checks)
+    else if (program.url) checkJson = checkFileAtUrl(program.url, program.checks);
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
 } else {
     exports.checkHtmlFile = checkHtmlFile;
+    exports.checkFileAtUrl = checkFileAtUrl;
 }
