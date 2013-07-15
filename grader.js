@@ -47,17 +47,13 @@ var loadChecks = function(checksfile) {
 };
 
 var checkFileAtUrl = function(url, checksfile) {
-    var resp = getResp(url, checksfile);        
-    $ = cheerio.load(resp);
-    return checkContents($, checksfile);
-}
-
-var getResp = function(url){
-    var result = rest.get(url).on('complete', function(response){
-	return response;
+    rest.get(url).on('complete', function(response){
+	$ = cheerio.load(response);
+	console.log($);
+	console.log(checkContents($, checksfile));
+	return checkContents($, checksfile);
     });
-    return result;
-};
+}
 
 var checkHtmlFile = function(htmlfile, checksfile) {
     $ = cheerioHtmlFile(htmlfile, checksfile);
@@ -87,9 +83,9 @@ if(require.main == module) {
         .option('-u, --url <url', 'URL')
         .parse(process.argv);
     var checkJson;
-    console.log(program.file + " " + program.url);
     if (program.file) checkJson = checkHtmlFile(program.file, program.checks)
-    else if (program.url) checkJson = checkFileAtUrl(program.url, program.checks);
+    else if (program.url) checkJson = checkFileAtUrl(program.url, program.checks) 
+    console.log(checkJson);
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
 } else {
