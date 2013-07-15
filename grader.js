@@ -46,12 +46,12 @@ var loadChecks = function(checksfile) {
     return JSON.parse(fs.readFileSync(checksfile));
 };
 
-var checkFileAtUrl = function(url, checksfile) {
+var checkAndPrintFileAtUrl = function(url, checksfile) {
     rest.get(url).on('complete', function(response){
-	$ = cheerio.load(response);
-	console.log($);
-	console.log(checkContents($, checksfile));
-	return checkContents($, checksfile);
+	$ = cheerio.load(response);	
+	var checkJson = checkContents($, checksfile);
+	var outJson = JSON.stringify(checkJson, null, 4);
+	console.log(outJson);
     });
 }
 
@@ -82,13 +82,15 @@ if(require.main == module) {
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists))
         .option('-u, --url <url', 'URL')
         .parse(process.argv);
-    var checkJson;
-    if (program.file) checkJson = checkHtmlFile(program.file, program.checks)
-    else if (program.url) checkJson = checkFileAtUrl(program.url, program.checks) 
-    console.log(checkJson);
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
-} else {
+
+    if (program.file) {
+	var checkJson = checkHtmlFile(program.file, program.checks);          
+        var outJson = JSON.stringify(checkJson, null, 4);
+        console.log(outJson);
+    }
+    else if (program.url) checkAndPrintFileAtUrl(program.url, program.checks);
+} 
+else {
     exports.checkHtmlFile = checkHtmlFile;
     exports.checkFileAtUrl = checkFileAtUrl;
 }
